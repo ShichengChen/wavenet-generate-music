@@ -28,7 +28,7 @@ class Dataset(data.Dataset):
         np.random.seed()
         namex = self.listx[index]
 
-        y, _ = sf.read('piano{}.wav'.format(namex))
+        y, _ = sf.read('piano/piano{}.wav'.format(namex))
         print('piano{}.wav'.format(namex))
         #factor1 = np.random.uniform(low=0.83, high=1.0)
         #y = y*factor1
@@ -93,7 +93,7 @@ class Testset(data.Dataset):
         'Generates one sample of data'
         namex = self.listx[index]
 
-        y, _ = sf.read('audioplayback.wav')
+        y, _ = sf.read('piano/piano{}.wav'.format(namex))
 
         #factor1 = np.random.uniform(low=0.83, high=1.0)
         #y = y*factor1
