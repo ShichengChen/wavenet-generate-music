@@ -12,7 +12,8 @@ from torch.utils import data
 from torchvision import transforms
 from scipy.io.wavfile import write
 from readpiano import Dataset, Testset, RandomCrop, ToTensor
-from wavenet import Wavenet
+#from wavenet import Wavenet
+from nvwavenet import Wavenet
 from transformData import mu_law_decode
 
 # In[2]:
@@ -32,7 +33,7 @@ filterSize = 3
 savemusic='vsCorpus/piano{}.wav'
 #savemusic0='vsCorpus/nus10xtr{}.wav'
 #savemusic1='vsCorpus/nus11xtr{}.wav'
-resumefile = 'model/piano1'  # name of checkpoint
+resumefile = 'model/piano2'  # name of checkpoint
 lossname = 'pianoloss2.txt'  # name of loss file
 continueTrain = False  # whether use checkpoint
 pad = np.sum(dilations0)
@@ -61,8 +62,8 @@ transform=transforms.Compose([RandomCrop(pad=field),ToTensor()])
 #validation_set = Testset(np.array([6,7,8,9,11,12,14,16,26]), 'ccmixter3/',pad=field)
 #training_set = Dataset(np.array([0]), 'ccmixter3/' ,pad=field,transform=transform)
 #validation_set = Testset(np.array([0]), 'ccmixter3/',pad=field,dilations1=dilations1,device=device)
-training_set = Dataset(np.arange(1), 'ccmixter3/' ,pad=field,transform=transform)
-validation_set = Testset(np.arange(1), 'ccmixter3/',pad=field,dilations1=dilations1,device=device)
+training_set = Dataset(np.arange(6), 'ccmixter3/' ,pad=field,transform=transform)
+validation_set = Testset(np.arange(6), 'ccmixter3/',pad=field,dilations1=dilations1,device=device)
 loadtr = data.DataLoader(training_set, batch_size=1,shuffle=True,num_workers=0,worker_init_fn=np.random.seed)
 loadval = data.DataLoader(validation_set,batch_size=1,num_workers=0)
 # In[6]:
@@ -112,7 +113,7 @@ def test(epoch):  # testing data
             ans0 = mu_law_decode(music.numpy().astype('int'))
 
             if not os.path.exists('vsCorpus/'): os.makedirs('vsCorpus/')
-            write(savemusic.format(epoch), sample_rate, ans0)
+            write(savemusic.format(epoch*6+iloader), sample_rate, ans0)
             print('test stored done', np.round(time.time() - start_time))
 
 

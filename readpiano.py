@@ -28,10 +28,15 @@ class Dataset(data.Dataset):
         np.random.seed()
         namex = self.listx[index]
 
-        y, _ = sf.read('audioplayback.wav')
-        print('piano')
+        y, _ = sf.read('piano{}.wav'.format(namex))
+        print('piano{}.wav'.format(namex))
         #factor1 = np.random.uniform(low=0.83, high=1.0)
         #y = y*factor1
+
+        ymean = y.mean()
+        ystd = y.std()
+        y = (y - ymean) / ystd
+
 
         y = mu_law_encode(y)
 
@@ -55,6 +60,7 @@ class RandomCrop(object):
         #print(startx)
         #x = x[startx - pad:startx + sampleSize + pad]
         #y = y[startx:startx + sampleSize]
+
         l = np.random.uniform(0.25, 0.5)
         sp = np.random.uniform(0, 1 - l)
         step = np.random.uniform(-0.5, 0.5)
@@ -91,6 +97,10 @@ class Testset(data.Dataset):
 
         #factor1 = np.random.uniform(low=0.83, high=1.0)
         #y = y*factor1
+
+        ymean = y.mean()
+        ystd = y.std()
+        y = (y - ymean) / ystd
 
         y = mu_law_encode(y)
 
