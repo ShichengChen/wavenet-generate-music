@@ -27,7 +27,6 @@ dilations0 = [2 ** i for i in range(10)] * 3
 dilations1 = [2 ** i for i in range(11)] * 4
 residualDim = 128  #
 skipDim = 512
-shapeoftest = 190500
 songnum=45
 filterSize = 3
 savemusic='vsCorpus/pianob{}.wav'
