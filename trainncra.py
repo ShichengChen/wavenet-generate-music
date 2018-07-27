@@ -110,7 +110,7 @@ def test(epoch):  # testing data
             #music = model.slowInfer(queue, y, 16000 * 0.01)
             #music = model.slowInfer(queue, y, 16000 * 0.1)
             music = model.slowInfer(None, y, sample_rate * 4)
-            print(music[:1000])
+            #print(music[:1000])
             ans0 = mu_law_decode(music.numpy().astype('int'))
 
             if not os.path.exists('vsCorpus/'): os.makedirs('vsCorpus/')
