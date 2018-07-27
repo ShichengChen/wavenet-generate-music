@@ -30,6 +30,7 @@ class Conv(torch.nn.Module):
 
 class Wavenet(nn.Module):
     def __init__(self, pad, sd, rd, dilations0,dilations1,device):
+        print("casual wavenet")
         self.dilations1 = dilations1
         self.device=device
         sd = 512
@@ -42,7 +43,6 @@ class Wavenet(nn.Module):
         print('sd rd:',sd,rd)
         self.wd=wd
         super(Wavenet, self).__init__()
-        #self.embedy = torch.nn.Embedding(256,wd)
         self.casual = torch.nn.Conv1d(256,wd,self.init_filter)
         self.pad = pad
         self.ydcnn  = nn.ModuleList()
@@ -126,7 +126,7 @@ class Wavenet(nn.Module):
 
     def slowInfer(self,queue,input=None,l = 16000*0.01):
         l = int(l)
-        label = input[:,self.field:self.field+l].clone().view(-1).to(self.device)
+        label = input[:,self.field:self.field+l].clone().view(-1)
         input = input[:,:self.field].clone().to(self.device)
         input = torch.zeros(1, 256, input.shape[-1]).to(self.device).scatter_(dim=1, index=input.reshape(1, 1, -1), value=1.0)
 
@@ -160,8 +160,8 @@ class Wavenet(nn.Module):
                                                                   index=output.max(dim=1, keepdim=True)[1].view(1, 1,
                                                                                                                 1),
                                                                   value=1.0)
-            input = torch.cat((input[:,:,1:], cur.view(1,256,1)), 2)
-            music[idx] = output.max(dim=1, keepdim=True)[1].view(1).long().cpu()[0]
+            input = torch.cat((input[:,:,1:].to(self.device), cur.view(1,256,1).to(self.device)), 2)
+            music[idx] = output.max(dim=1, keepdim=True)[1].view(1).long()[0]
         print(float(float(torch.sum(music.long() == label.long())) / float(music.shape[0])))
         return music
 

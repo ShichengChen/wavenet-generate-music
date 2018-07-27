@@ -12,8 +12,8 @@ from torch.utils import data
 from torchvision import transforms
 from scipy.io.wavfile import write
 from readpiano import Dataset, Testset, RandomCrop, ToTensor
-from wavenet import Wavenet
-#from nvwavenet import Wavenet
+#from wavenet import Wavenet
+from nvwavenet import Wavenet
 from transformData import mu_law_decode
 
 # In[2]:
@@ -21,20 +21,20 @@ from transformData import mu_law_decode
 
 sampleSize = 16000  # the length of the sample size
 quantization_channels = 256
-sample_rate = 16000
+sample_rate = 8000
 dilations0 = [2 ** i for i in range(10)] * 3
 #dilations1 = [2 ** i for i in range(13)] * 4
-dilations1 = [2 ** i for i in range(10)] * 5
+dilations1 = [2 ** i for i in range(10)] * 4
 residualDim = 128  #
 skipDim = 512
 shapeoftest = 190500
 songnum=45
 filterSize = 3
-savemusic='vsCorpus/piano{}.wav'
+savemusic='vsCorpus/pianoa{}.wav'
 #savemusic0='vsCorpus/nus10xtr{}.wav'
 #savemusic1='vsCorpus/nus11xtr{}.wav'
-resumefile = 'model/piano1'  # name of checkpoint
-lossname = 'pianoloss2.txt'  # name of loss file
+resumefile = 'model/pianoa'  # name of checkpoint
+lossname = 'pianolossa.txt'  # name of loss file
 continueTrain = False  # whether use checkpoint
 pad = np.sum(dilations0)
 field = np.sum(dilations1) + 2
@@ -48,7 +48,7 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # use specific GPU
 
 # In[4]:
-print('trainx')
+print('train nv')
 
 use_cuda = torch.cuda.is_available()  # whether have available GPU
 torch.manual_seed(1)
@@ -63,7 +63,7 @@ transform=transforms.Compose([RandomCrop(pad=field),ToTensor()])
 #training_set = Dataset(np.array([0]), 'ccmixter3/' ,pad=field,transform=transform)
 #validation_set = Testset(np.array([0]), 'ccmixter3/',pad=field,dilations1=dilations1,device=device)
 training_set = Dataset(np.arange(1), 'ccmixter3/' ,pad=field,transform=transform)
-validation_set = Testset(np.arange(6), 'ccmixter3/',pad=field,dilations1=dilations1,device=device)
+validation_set = Testset(np.arange(1), 'ccmixter3/',pad=field,dilations1=dilations1,device=device)
 loadtr = data.DataLoader(training_set, batch_size=1,shuffle=True,num_workers=0,worker_init_fn=np.random.seed)
 loadval = data.DataLoader(validation_set,batch_size=1,num_workers=0)
 # In[6]:
@@ -75,6 +75,7 @@ model = model.cuda()
 criterion = nn.CrossEntropyLoss()
 # in wavenet paper, they said crossentropyloss is far better than MSELoss
 optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
+print("have weight decay")
 # use adam to train
 
 maxloss=np.zeros(50)+100
@@ -105,10 +106,10 @@ def test(epoch):  # testing data
         for iloader, y in loadval:
             iloader=iloader.item()
             #music = model.infer(queue)
-            #music = model.slowInfer(queue, y, 16000 * 0.001)
+            #music = model.slowInfer(None, y, 16000 * 0.001)
             #music = model.slowInfer(queue, y, 16000 * 0.01)
             #music = model.slowInfer(queue, y, 16000 * 0.1)
-            music = model.slowInfer(None, y, 16000 * 3)
+            music = model.slowInfer(None, y, sample_rate * 4)
             print(music[:1000])
             ans0 = mu_law_decode(music.numpy().astype('int'))
 
@@ -125,13 +126,14 @@ def train(epoch):
         startx = 0
         idx = np.arange(startx + field, ytrain.shape[-1] - field - sampleSize, sampleSize)
         #when sample rate is samplesize//2, the result is similar
-        #np.random.shuffle(idx)
+        np.random.shuffle(idx)
         #lens = 100
         #lens = 10
         #idx = idx[:lens]
         cnt, aveloss, aveacc = 0, 0, 0
         start_time = time.time()
         model.train()
+        cntepo=0
         for i, ind in enumerate(idx):
             optimizer.zero_grad()
             target0 = ytrain[:, ind - field:ind + sampleSize - 1].to(device)
@@ -147,9 +149,10 @@ def train(epoch):
             aveloss+=float(loss)
             if(float(loss) > 10):print(float(loss))
             cnt+=1
+            cntepo+=1
             if(cnt > 100):
-                print('loss for train:{:.4f},acc:{:.4f},num{},epoch{},({:.3f} sec/step)'.format(
-                    aveloss / cnt, aveacc / cnt, iloader, epoch, time.time() - start_time))
+                print('loss for train:{:.4f},acc:{:.4f},iter{},num{},epoch{},({:.3f} sec/step)'.format(
+                    aveloss / cnt, aveacc / cnt,cntepo, iloader, epoch, time.time() - start_time))
                 cnt, aveloss, aveacc = 0, 0, 0
                 start_time = time.time()
             lossrecord.append(float(loss))
@@ -176,11 +179,11 @@ def train(epoch):
 # In[ ]:
 
 print('training...')
-print('training...')
 for epoch in range(100000):
 
     #if (epoch + start_epoch) % 64 == 0 and (epoch + start_epoch) > 0: test(epoch + start_epoch)
     #if (continueTrain == True and epoch == 0): test(epoch + start_epoch)
+    #test(epoch + start_epoch)
     train(epoch + start_epoch)
     test(epoch + start_epoch)
     #if (epoch + start_epoch) % 4 == 0 and (epoch + start_epoch) > 0: test(epoch + start_epoch)

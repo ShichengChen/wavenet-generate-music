@@ -30,6 +30,7 @@ class Conv(torch.nn.Module):
 
 class Wavenet(nn.Module):
     def __init__(self, pad, sd, rd, dilations0,dilations1,device):
+        print("nv wavenet")
         self.dilations1 = dilations1
         self.device=device
         sd = 512
@@ -126,7 +127,7 @@ class Wavenet(nn.Module):
 
     def slowInfer(self,queue,input=None,l = 16000*0.01):
         l = int(l)
-        label = input[:,self.field:self.field+l].clone().view(-1).to(self.device)
+        label = input[:,self.field:self.field+l].clone().view(-1)
         input = input[:,:self.field].clone().to(self.device)
 
         music=torch.zeros(l)
@@ -154,8 +155,11 @@ class Wavenet(nn.Module):
             output = self.post2(output)
             #print(output.shape)
             #print(input.shape,output.max(1, keepdim=True)[1].shape)
-            input = torch.cat((input[:,1:].long(),output.max(dim=1, keepdim=True)[1].view(1,1).long()),1)
+            p=F.softmax(output,dim=1)
+            out = np.random.choice(np.arange(256), p=p.view(-1).cpu().numpy())
+            out = torch.tensor([out],dtype=torch.long).view(1,1).to(self.device)
+            input = torch.cat((input[:,1:].long(),out),1)
             music[idx] = input.cpu()[0,-1]
-        print(float(float(torch.sum(music.long() == label.long())) / float(music.shape[0])))
+        #print(float(float(torch.sum(music.long() == label.long())) / float(music.shape[0])))
         return music
 

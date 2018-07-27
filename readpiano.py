@@ -9,8 +9,8 @@ from transformData import mu_law_encode, mu_law_encode
 import soundfile as sf
 
 sampleSize = 16000
-sample_rate = 16000  # the length of audio for one second
-
+sample_rate = 8000  # the length of audio for one second
+normalized = False
 
 class Dataset(data.Dataset):
     def __init__(self, listx, rootx,pad, transform=None):
@@ -29,13 +29,13 @@ class Dataset(data.Dataset):
         namex = self.listx[index]
 
         y, _ = sf.read('piano/piano{}.wav'.format(namex))
-        print('piano{}.wav'.format(namex))
+        print('train piano{}.wav,train audio shape{},rate{}'.format(namex,y.shape,_))
         #factor1 = np.random.uniform(low=0.83, high=1.0)
         #y = y*factor1
-
-        ymean = y.mean()
-        ystd = y.std()
-        y = (y - ymean) / ystd
+        if normalized:
+            ymean = y.mean()
+            ystd = y.std()
+            y = (y - ymean) / ystd
 
 
         y = mu_law_encode(y)
@@ -94,19 +94,20 @@ class Testset(data.Dataset):
         namex = self.listx[index]
 
         y, _ = sf.read('piano/piano{}.wav'.format(namex))
-
         #factor1 = np.random.uniform(low=0.83, high=1.0)
         #y = y*factor1
 
-        ymean = y.mean()
-        ystd = y.std()
-        y = (y - ymean) / ystd
+        if normalized:
+            ymean = y.mean()
+            ystd = y.std()
+            y = (y - ymean) / ystd
 
         y = mu_law_encode(y)
 
         #y = torch.from_numpy(y.reshape(-1)).type(torch.LongTensor)
-        y = torch.from_numpy(y.reshape(-1)[int(16000*10):]).type(torch.LongTensor)
-        print("no random init")
+        print('test piano{}.wav,train audio shape{},rate{}'.format(namex, y.shape, _))
+        y = torch.from_numpy(y.reshape(-1)[int(16000*1):]).type(torch.LongTensor)
+        print("first second as seed")
         #y = torch.randint(0, 256, (100000,)).type(torch.LongTensor)
         #print("random init")
         #y = F.pad(y, (self.pad, self.pad), mode='constant', value=127)
