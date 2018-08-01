@@ -1,6 +1,6 @@
 # fast-wavenet
 - implement fast-wavenet by pytorch
-#wavenet for music generation
+# wavenet for music generation
 - the model train from the [4 hours piano solo](https://www.youtube.com/watch?v=EhO_MrRfftU)
 - hyper-parameters are:
 	- dilations = [2 ** i for i in range(11)] * 4
